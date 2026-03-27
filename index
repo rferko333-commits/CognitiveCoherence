@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Coherence Quotient</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================================
+           DESIGN TOKENS (DARKER ORANGE THEME)
+        ========================================= */
+        :root {
+            --accent:      #d35400; /* Moderately darker orange */
+            --accent-dim:  #a84300; 
+            --accent-rgb:  211,84,0;
+
+            --bg:          #0d0d0d;
+            --card:        #161616;
+            --card-alt:    #1c1c1c;
+            --border:      #2a2a2a;
+            --border-mid:  #333333;
+            --text:        #e8e4dc;
+            --text-dim:    #9a9690;
+            --text-muted:  #666260;
+
+            --font-display: 'Cinzel', Georgia, serif;
+            --font-body:    'Raleway', sans-serif;
+            --radius:       10px;
+            --radius-sm:    6px;
+            --transition:   0.2s ease;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 30px 20px;
+            line-height: 1.65;
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(var(--accent-rgb),0.07) 0%, transparent 70%);
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 50px 50px 40px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 0 1px rgba(var(--accent-rgb),0.05), 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            text-align: center;
+            color: var(--text);
+            font-size: 2rem;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin: 0 0 6px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            text-align: center;
+            color: var(--text);
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            margin: 0 0 30px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.75rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* =========================================
+           BUTTONS
+        ========================================= */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 16px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background-color: var(--accent-dim); }
+        .btn-primary:disabled {
+            background-color: #3a2a10;
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .btn-ghost {
+            width: auto;
+            padding: 14px 22px;
+            flex-shrink: 0;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-mid);
+            font-size: 0.9rem;
+            margin-top: 0;
+        }
+        .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+        .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-save {
+            background: var(--card-alt);
+            color: var(--accent);
+            border: 1px solid rgba(var(--accent-rgb),0.4);
+        }
+        .btn-save:hover { background: var(--accent); color: #fff; }
+
+        .btn-retake {
+            background: var(--card-alt);
+            color: var(--text-dim);
+            border: 1px solid var(--border-mid);
+        }
+        .btn-retake:hover { border-color: var(--text-dim); color: var(--text); }
+
+        /* =========================================
+           QUIZ
+        ========================================= */
+        #quiz-section { display: none; }
+
+        .quiz-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .quiz-counter {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--border);
+            border-radius: 999px;
+            margin-bottom: 34px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dim));
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 999px;
+        }
+
+        .question-text {
+            font-size: 1.18rem;
+            font-weight: 500;
+            margin-bottom: 36px;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 60px;
+        }
+
+        /* =========================================
+           SLIDER
+        ========================================= */
+        .slider-section { margin-bottom: 8px; }
+
+        .slider-endpoints {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .slider-endpoint {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        .slider-track-wrap { position: relative; padding: 10px 0; }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border-mid);
+            outline: none;
+            border-radius: 2px;
+            cursor: pointer;
+            display: block;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 14px rgba(var(--accent-rgb),0.55);
+            border: 2px solid rgba(255,255,255,0.18);
+            transition: box-shadow 0.2s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 22px rgba(var(--accent-rgb),0.85);
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 14px rgba(var(--accent-rgb),0.55);
+            border: 2px solid rgba(255,255,255,0.18);
+        }
+
+        .slider-feedback-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            min-height: 1.6em;
+        }
+
+        .slider-word-label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+            transition: opacity 0.2s;
+        }
+        .slider-word-label.hidden { opacity: 0; }
+        .slider-numeric { font-size: 0.82rem; color: var(--text-muted); }
+        .slider-numeric.hidden { opacity: 0; }
+
+        .slider-prompt {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 10px;
+            padding: 8px 0;
+            border-top: 1px dashed var(--border);
+        }
+
+        .quiz-nav { display: flex; gap: 12px; margin-top: 28px; }
+        .quiz-nav .btn { margin-top: 0; }
+        #nextBtn { flex: 1; }
+
+        /* =========================================
+           RESULTS
+        ========================================= */
+        #results-section { display: none; }
+
+        .density-box {
+            background: rgba(var(--accent-rgb),0.08);
+            border: 1px solid rgba(var(--accent-rgb),0.28);
+            padding: 26px 24px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 10px;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .density-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+
+        .density-value {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 10px 0 6px;
+            color: var(--text);
+            letter-spacing: 0.06em;
+        }
+
+        .density-score {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+        }
+
+        .density-note {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 10px 0 28px;
+            line-height: 1.65;
+            text-align: center;
+            padding: 0 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 420px;
+            width: 100%;
+            margin: 28px 0;
+        }
+
+        .insight-card {
+            background: var(--card-alt);
+            border-left: 4px solid var(--border-mid);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            font-size: 0.91rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+        .insight-card strong { color: var(--text); }
+        .insight-card.secondary { border-left-color: var(--border-mid); }
+
+        /* Bars */
+        .archetype-bars { margin-top: 8px; }
+        .arch-bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 14px;
+        }
+        .arch-label {
+            width: 140px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .arch-track {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .arch-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+        .arch-score {
+            width: 40px;
+            text-align: right;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        /* =========================================
+           ACCORDION
+        ========================================= */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+            user-select: none;
+        }
+        .accordion-header:hover .acc-title { color: var(--text); }
+        .acc-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .acc-arrow {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: transform 0.25s ease;
+        }
+        .acc-arrow.open { transform: rotate(90deg); }
+        .accordion-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease;
+        }
+        .accordion-body.open { max-height: 9999px; }
+        .accordion-body-inner { padding-bottom: 20px; }
+
+        /* Pattern break / Recommendations cards */
+        .pb-card {
+            background: var(--card-alt);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+        }
+        .pb-archetype {
+            font-size: 0.73rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .pb-exercise-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .pb-exercise-desc {
+            font-size: 0.86rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+        .pb-why {
+            font-size: 0.81rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-style: italic;
+        }
+
+        /* Legend */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .legend-item {
+            background: var(--card-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+        }
+        .legend-item-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .legend-item-desc {
+            font-size: 0.84rem;
+            color: var(--text-dim);
+            line-height: 1.55;
+            margin-bottom: 8px;
+        }
+
+        /* Participation opt-in */
+        .participation-box {
+            background: var(--card-alt);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-top: 30px;
+        }
+        .participation-box .p-title {
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .participation-box .p-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+            margin-bottom: 14px;
+        }
+        .participation-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .participation-toggle input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .participation-toggle label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .p-status {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-height: 1.2em;
+        }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.78rem;
+            margin-top: 24px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+        /* =========================================
+           FULL REPORT CAPTURE
+        ========================================= */
+        #full-report-capture {
+            position: fixed;
+            top: -99999px;
+            left: 0;
+            width: 1400px;
+            background: #0d0d0d;
+            display: flex;
+            gap: 0;
+            z-index: -1;
+        }
+        .report-col {
+            flex: 1;
+            padding: 40px 36px;
+            min-width: 0;
+        }
+        .report-col-divider {
+            width: 1px;
+            background: #2a2a2a;
+            flex-shrink: 0;
+            margin: 40px 0;
+        }
+        .report-col-title {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 30px 22px 28px; }
+            h1 { font-size: 1.4rem; }
+            .legend-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Cognitive Coherence Quotient</h1>
+    <div class="subtitle">Viscosity &amp; Laminar Flow Assessment</div>
+
+    <!-- ===== INTRO / SETUP ===== -->
+    <div id="setup-section">
+        <div style="font-size: 0.95rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 30px; background: var(--card-alt); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            This assessment measures the internal thermodynamics of your awareness. An egoic mind operates like a highly heated gas—thoughts bounce chaotically, creating <strong>computational turbulence</strong> and friction. As the mind settles, it approaches macroscopic quantum coherence (analogous to a <strong>Fröhlich Condensate</strong>). In this state, wavefunctions synchronize, dualistic bifurcation ceases, and the mind achieves frictionless, <strong>laminar flow</strong>.<br><br>
+            Answer the following 40 statements based on your <em>actual, current felt experience</em>, not how you think you should feel.
+        </div>
+        <button class="btn btn-primary" onclick="startQuiz()">Begin Assessment</button>
+    </div>
+
+    <!-- ===== QUIZ ===== -->
+    <div id="quiz-section">
+        <div class="quiz-meta">
+            <div class="quiz-counter" id="quizCounter"></div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+
+        <div class="question-text" id="questionText"></div>
+
+        <div class="slider-section">
+            <div class="slider-endpoints">
+                <span class="slider-endpoint">Does not describe me</span>
+                <span class="slider-endpoint">Describes me completely</span>
+            </div>
+            <div class="slider-track-wrap">
+                <input type="range" min="0" max="100" value="50" step="1" id="responseSlider">
+            </div>
+            <div class="slider-feedback-row">
+                <span class="slider-word-label hidden" id="sliderWordLabel"></span>
+                <span class="slider-numeric hidden" id="sliderNumeric"></span>
+            </div>
+            <div class="slider-prompt" id="sliderPrompt">Move the slider to respond</div>
+        </div>
+
+        <div class="quiz-nav">
+            <button class="btn btn-ghost" id="backBtn" onclick="prevQuestion()" disabled>&#8592; Back</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>Next &#8594;</button>
+        </div>
+    </div>
+
+    <!-- ===== RESULTS ===== -->
+    <div id="results-section">
+
+        <div id="results-capture" style="padding:4px; background:var(--card); border-radius:12px;">
+            <h2>Your Coherence Profile</h2>
+
+            <div class="density-box">
+                <div class="density-label">Cognitive State</div>
+                <div class="density-value" id="densityValue">Calculating...</div>
+                <div class="density-score" id="densityScore"></div>
+            </div>
+            <div class="density-note" id="densityNote"></div>
+
+            <div id="insightContainer"></div>
+
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+
+            <div class="section-label" style="margin-top:8px;">Dimensional Coherence Levels (0-100)</div>
+            <div class="archetype-bars" id="barContainer"></div>
+        </div>
+
+        <!-- Coherence Practices accordion -->
+        <div>
+            <div class="accordion-header" onclick="toggleAccordion('pbBody','pbArrow')">
+                <span class="acc-title">Coherence Practices (Growth Edges)</span>
+                <span class="acc-arrow" id="pbArrow">&#9654;</span>
+            </div>
+            <div class="accordion-body" id="pbBody">
+                <div class="accordion-body-inner" id="pbContainer"></div>
+            </div>
+        </div>
+
+        <!-- Dimensions Descriptions accordion -->
+        <div>
+            <div class="accordion-header" onclick="toggleAccordion('legendBody','legendArrow')">
+                <span class="acc-title">Dimension Descriptions</span>
+                <span class="acc-arrow" id="legendArrow">&#9654;</span>
+            </div>
+            <div class="accordion-body" id="legendBody">
+                <div class="accordion-body-inner">
+                    <div class="legend-grid" id="legendGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="participation-box">
+            <div class="p-title">Voluntary Research Participation</div>
+            <div class="p-desc">
+                Your anonymized results (dimension scores only, no personal data) may be contributed to an aggregate dataset for studying cognitive coherence in the general population. Participation is entirely voluntary and has no effect on your individual results.
+            </div>
+            <div class="participation-toggle">
+                <input type="checkbox" id="participateCheck" onchange="handleParticipation()">
+                <label for="participateCheck">Yes, I consent to contribute my anonymized scores to this study</label>
+            </div>
+            <div class="p-status" id="participationStatus"></div>
+        </div>
+
+        <hr class="section-divider">
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-save" style="flex:1; margin-top:0;" onclick="saveResults()">Save Results as PNG</button>
+            <button class="btn" style="flex:1; margin-top:0; background:var(--accent); color:#fff;" onclick="downloadFull()">Full Report</button>
+        </div>
+        <button class="btn btn-retake" onclick="location.reload()">Retake Assessment</button>
+
+        <p class="footer-note">
+            Results reflect self-reported phenomenological states and are not clinical diagnoses.<br>
+            Cognitive Coherence fluctuates based on environmental and internal thermodynamic processing.
+        </p>
+    </div>
+
+</div>
+
+<!-- FULL REPORT CAPTURE -->
+<div id="full-report-capture">
+    <div class="report-col" id="fr-left"></div>
+    <div class="report-col-divider"></div>
+    <div class="report-col" id="fr-right"></div>
+</div>
+
+<script>
+// ==========================================
+// DATA: DIMENSIONS & RECOMMENDATIONS
+// ==========================================
+const DIMENSIONS = {
+    'Viscosity': {
+        desc: 'Measures egoic friction and stickiness. High coherence means thoughts dissipate without resistance (superfluidity). Low coherence means thoughts catch and create ongoing turbulence.',
+        antidote: {
+            title: 'The Friction Audit',
+            desc: 'When an unpleasant thought or sensation arises, do not try to push it away. Instead, locate exactly where it "catches" or feels sticky in your body. Breathe directly into that physical location and allow the sensation to exist without narrating a story about why it is there.',
+            why: 'Suffering is turbulent flow. By dropping the linguistic story and focusing on the raw sensation, you reduce the computational resistance holding the thought in place, allowing it to dissipate smoothly.'
+        }
+    },
+    'Default Mode': {
+        desc: 'Measures identification with the internal narrator (the Default Mode Network). High coherence means resting quietly behind the thoughts. Low coherence is mistaking the software for the hardware.',
+        antidote: {
+            title: 'Witnessing the Software',
+            desc: 'Set a timer for 5 minutes. Close your eyes and wait for the next thought to appear. Treat the thought as if it is a pop-up window on a computer screen. Say to yourself, "I am aware that I am thinking about [X]." Do not engage the thought; just log it and wait for the next one.',
+            why: 'The egoic brain identifies completely with its outputs. By inserting the phrase "I am aware that," you force a dissociative wedge between the pure Awareness (the White Hole) and the computational output, quieting the Default Mode Network.'
+        }
+    },
+    'Synchrony': {
+        desc: 'Measures macroscopic coherence (laminar flow). High coherence is operating in a unified, frictionless flow state. Low coherence feels scattered, forced, and disjointed.',
+        antidote: {
+            title: 'The Peripheral Expansion',
+            desc: 'When you feel your attention narrowing into a tight, stressed focal point, intentionally expand your visual awareness to your peripheral vision. Try to take in the entire room at once without focusing on any single object. Maintain this wide, soft gaze for 60 seconds.',
+            why: 'Scattered, forced attention is the hallmark of asynchronously collapsing wavefunctions. Activating peripheral vision naturally down-regulates the sympathetic nervous system and induces a macroscopic, synchronous neural state, returning you to laminar flow.'
+        }
+    },
+    'Bifurcation': {
+        desc: 'Measures the reliance on Language to chop reality into "self/other" or "good/bad". High coherence rests prior to conceptualization. Low coherence relies on constant linguistic narration.',
+        antidote: {
+            title: 'Use the Language Undoer',
+            desc: 'Take your most stressful recurring thought and put it into the Language Undoer app. Watch as the sentence is deconstructed word by word until nothing is left but the empty screen.',
+            why: 'Language is the engine of bifurcation. You cannot think your way out of a language trap. By systematically deconstructing the syntax of your stress, you force the biological protocomputer to temporarily cease bifurcation and rest in the Void.'
+        }
+    },
+    'Temporality': {
+        desc: 'Measures the illusion of Spacetime vs. Timespace. High coherence rests in the eternal, spacious present. Low coherence burns massive energy regretting the past or simulating the future.',
+        antidote: {
+            title: 'Zero-Point Anchoring',
+            desc: 'Whenever you feel rushed or anxious about the future, stop and ask: "Is there actually a problem occurring in this exact, physical second?" Touch an object near you. Feel its temperature and texture to anchor yourself entirely in the absolute present.',
+            why: 'Simulating the future requires massive computational energy, causing turbulent heat in the brain. By grounding your awareness in the immediate sensory present, you cut the power to the simulation, returning to the zero-compute state of the eternal Now.'
+        }
+    },
+    'Void Tolerance': {
+        desc: 'Measures comfort with "Zero Compute" (the Boundless Potential). High coherence finds bliss in silence. Low coherence constantly seeks sensory input to confirm the ego’s existence.',
+        antidote: {
+            title: 'The Silent Threshold',
+            desc: 'Sit in a quiet room with no music, no phone, and no task. When the urge to check a device or distract yourself arises, notice the physical feeling of that urge. Do not act on it. Sit with the discomfort of boredom for 5 more minutes.',
+            why: 'The egoic brain fears the Void because zero-compute feels like death to the ego. By intentionally tolerating the lack of input, you train your system to realize that the Void is not empty; it is pregnant, safe, and rejuvenating.'
+        }
+    },
+    'Relational Unity': {
+        desc: 'Measures dual-aspect monism vs. existential separation. High coherence recognizes the shared underlying medium in all things. Low coherence views others as isolated competitors.',
+        antidote: {
+            title: 'The Syndiffeonesis Shift',
+            desc: 'When interacting with someone who irritates you, silently remind yourself: "This person is another localized window of the exact same Awareness that I am. We are the same screen playing different movies." Look for the shared humanity beneath their turbulent flow.',
+            why: 'The illusion of absolute separation is the core of Samsaric suffering. By consciously shifting your framework to recognize the shared relational medium, you dissolve the boundary of the "I" and naturally invoke compassion.'
+        }
+    },
+    'Metacognition': {
+        desc: 'Measures the capacity to be Aware of Awareness. High coherence can easily zoom out to witness the localized window. Low coherence gets entirely lost inside the emotional narrative.',
+        antidote: {
+            title: 'The Figure-Ground Reversal',
+            desc: 'During a moment of strong emotion, shift your attention away from the *content* of the emotion and focus on the *container*. Ask: "What is the space in which this emotion is appearing? How large is the Awareness that is holding this feeling?"',
+            why: 'This is the mechanical application of the Buddhabrot escape trajectory. By pulling attention away from the fractal boundary (the emotion) and turning it back onto the Source (Awareness), you instantly transcend the localized trap.'
+        }
+    }
+};
+
+// ==========================================
+// QUESTIONS (40 total, 5 per dimension)
+// ==========================================
+// R = reverse scored
+const RAW_QUESTIONS = [
+    // Viscosity
+    { dim: 'Viscosity', text: "When an unpleasant thought arises, it quickly dissipates without leaving a lingering 'sticky' feeling.", r: false },
+    { dim: 'Viscosity', text: "I often feel mental friction, as if my mind is grinding against reality.", r: true },
+    { dim: 'Viscosity', text: "Minor physical discomforts (like being too warm or a slight ache) easily trigger cascades of negative thinking.", r: true },
+    { dim: 'Viscosity', text: "When insulted or misunderstood, I can let it go almost immediately without mentally replaying the scenario.", r: false },
+    { dim: 'Viscosity', text: "I frequently experience a physical sense of tension or 'clenching' in my body when my plans are interrupted.", r: true },
+    // Default Mode
+    { dim: 'Default Mode', text: "I often realize I've spent the last 10 minutes completely lost in a daydream or internal argument.", r: true },
+    { dim: 'Default Mode', text: "I feel a spacious, noticeable gap between myself and the voice in my head.", r: false },
+    { dim: 'Default Mode', text: "I feel as though I literally *am* the internal narrator in my mind.", r: true },
+    { dim: 'Default Mode', text: "When doing mundane tasks (washing dishes, walking), my mind is usually somewhere else entirely.", r: true },
+    { dim: 'Default Mode', text: "I can observe my thoughts passing like clouds without feeling the need to interact with or claim them.", r: false },
+    // Synchrony
+    { dim: 'Synchrony', text: "I frequently experience states where the boundary between 'me' and the task I am doing disappears.", r: false },
+    { dim: 'Synchrony', text: "My mind often feels scattered, like light from a bulb rather than a focused laser.", r: true },
+    { dim: 'Synchrony', text: "I can maintain clear, alert presence without feeling like I have to forcefully strain my attention.", r: false },
+    { dim: 'Synchrony', text: "Even in chaotic or loud environments, I can effortlessly access a baseline of inner stillness.", r: false },
+    { dim: 'Synchrony', text: "My actions usually feel forced or heavily deliberated rather than spontaneous and effortless.", r: true },
+    // Bifurcation
+    { dim: 'Bifurcation', text: "I feel an automatic urge to label my experiences as definitively 'good' or 'bad' as soon as they happen.", r: true },
+    { dim: 'Bifurcation', text: "I can look at an object and simply experience its raw presence without my mind naming or categorizing it.", r: false },
+    { dim: 'Bifurcation', text: "I feel a sharp, fundamental separation between 'myself' (in here) and the 'outside world' (out there).", r: true },
+    { dim: 'Bifurcation', text: "I am comfortable resting in a state of 'not knowing,' without rushing to define or intellectualize what I am experiencing.", r: false },
+    { dim: 'Bifurcation', text: "I constantly analyze and narrate my experiences to myself as they are happening.", r: true },
+    // Temporality
+    { dim: 'Temporality', text: "I experience a chronic sense of urgency, as if I am always 'running out of time.'", r: true },
+    { dim: 'Temporality', text: "I experience life as a spacious, open present, rather than a timeline I am being dragged across.", r: false },
+    { dim: 'Temporality', text: "My mind frequently burns energy projecting highly detailed, stressful future scenarios.", r: true },
+    { dim: 'Temporality', text: "I spend a significant amount of mental energy rewriting or regretting past events.", r: true },
+    { dim: 'Temporality', text: "I can plan for the future when necessary without feeling psychological anxiety about it in the present moment.", r: false },
+    // Void Tolerance
+    { dim: 'Void Tolerance', text: "I feel a background hum of anxiety or restlessness when there is no external stimulation (music, screens, tasks).", r: true },
+    { dim: 'Void Tolerance', text: "I actively seek out distractions specifically to avoid sitting in silence.", r: true },
+    { dim: 'Void Tolerance', text: "I find profound rest, safety, and rejuvenation in absolute silence and doing nothing.", r: false },
+    { dim: 'Void Tolerance', text: "I feel bored easily when I am not actively 'doing' something or solving a problem.", r: true },
+    { dim: 'Void Tolerance', text: "I am entirely comfortable sitting with a completely blank mind for extended periods.", r: false },
+    // Relational Unity
+    { dim: 'Relational Unity', text: "I often feel existentially isolated, as though I am locked inside my own head.", r: true },
+    { dim: 'Relational Unity', text: "When I see someone else suffering, I feel a deep sense of shared essence with them.", r: false },
+    { dim: 'Relational Unity', text: "I view most other people fundamentally as competitors or obstacles to my own well-being.", r: true },
+    { dim: 'Relational Unity', text: "I feel a tangible sense of kinship or underlying unity with non-human life and nature.", r: false },
+    { dim: 'Relational Unity', text: "I realize that my 'enemies' are simply other localized points of awareness caught in turbulent flow.", r: false },
+    // Metacognition
+    { dim: 'Metacognition', text: "I get so completely absorbed in my emotions that I lose all sense of perspective.", r: true },
+    { dim: 'Metacognition', text: "I can easily shift my attention from *what* I am experiencing (the thought) to the *fact* that I am aware.", r: false },
+    { dim: 'Metacognition', text: "I view my physical body and my thoughts as things that I *experience*, rather than what I fundamentally *am*.", r: false },
+    { dim: 'Metacognition', text: "In moments of intense stress, I find it nearly impossible to step back and observe my own mind.", r: true },
+    { dim: 'Metacognition', text: "I can instantly 'zoom out' and witness my localized window of awareness from a broader perspective.", r: false }
+];
+
+// ==========================================
+// STATE
+// ==========================================
+let shuffledQuestions = [];
+let currentIndex      = 0;
+let sliderTouched     = false;
+let savedAnswers      = {}; // stores 0-100 raw
+
+// ==========================================
+// INIT
+// ==========================================
+function startQuiz() {
+    shuffledQuestions = [...RAW_QUESTIONS].sort(() => Math.random() - 0.5);
+    document.getElementById('setup-section').style.display = 'none';
+    document.getElementById('quiz-section').style.display = 'block';
+    document.getElementById('responseSlider').addEventListener('input', onSliderInput);
+    renderQuestion();
+}
+
+// ==========================================
+// SLIDER
+// ==========================================
+function onSliderInput() {
+    sliderTouched = true;
+    const val = parseInt(document.getElementById('responseSlider').value);
+    updateSliderFeedback(val, true);
+    document.getElementById('nextBtn').disabled = false;
+    document.getElementById('sliderPrompt').style.display = 'none';
+}
+
+function updateSliderFeedback(val, show) {
+    const wordEl = document.getElementById('sliderWordLabel');
+    const numEl  = document.getElementById('sliderNumeric');
+    if (!show) {
+        wordEl.classList.add('hidden');
+        numEl.classList.add('hidden');
+        return;
+    }
+    const words = ['Not at all', 'Rarely', 'Occasionally', 'Sometimes', 'Often', 'Frequently', 'Almost always'];
+    const idx   = Math.min(Math.floor(val / 100 * (words.length - 1) + 0.5), words.length - 1);
+    wordEl.textContent = words[idx];
+    numEl.textContent  = val;
+    wordEl.classList.remove('hidden');
+    numEl.classList.remove('hidden');
+}
+
+// ==========================================
+// RENDER QUESTION
+// ==========================================
+function renderQuestion() {
+    const q   = shuffledQuestions[currentIndex];
+    const pct = (currentIndex / shuffledQuestions.length) * 100;
+
+    document.getElementById('quizCounter').textContent    = `${currentIndex + 1} / ${shuffledQuestions.length}`;
+    document.getElementById('progressBar').style.width    = pct + '%';
+    document.getElementById('questionText').textContent   = q.text;
+
+    const slider = document.getElementById('responseSlider');
+
+    if (savedAnswers[currentIndex] !== undefined) {
+        slider.value = savedAnswers[currentIndex];
+        sliderTouched = true;
+        updateSliderFeedback(savedAnswers[currentIndex], true);
+        document.getElementById('nextBtn').disabled = false;
+        document.getElementById('sliderPrompt').style.display = 'none';
+    } else {
+        // Randomize start position 20-80 to remove center bias
+        slider.value  = Math.floor(Math.random() * 61) + 20;
+        sliderTouched = false;
+        updateSliderFeedback(0, false);
+        document.getElementById('sliderPrompt').style.display = 'block';
+        document.getElementById('nextBtn').disabled = true;
+    }
+
+    document.getElementById('backBtn').disabled = currentIndex === 0;
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function nextQuestion() {
+    if (!sliderTouched) return;
+    savedAnswers[currentIndex] = parseInt(document.getElementById('responseSlider').value);
+    currentIndex++;
+    
+    if (currentIndex >= shuffledQuestions.length) {
+        showResults();
+    } else {
+        renderQuestion();
+    }
+}
+
+function prevQuestion() {
+    if (currentIndex === 0) return;
+    if (sliderTouched) {
+        savedAnswers[currentIndex] = parseInt(document.getElementById('responseSlider').value);
+    }
+    currentIndex--;
+    renderQuestion();
+}
+
+// ==========================================
+// SCORE COLOR: red/brown (turbulent) -> amber -> cyan/teal (laminar)
+// ==========================================
+function scoreColor(val) {
+    if (val >= 85) return { hex: '#1abc9c', rgb: '26,188,156'  }; // Teal (Condensate)
+    if (val >= 60) return { hex: '#27ae60', rgb: '39,174,96'   }; // Green (Laminar)
+    if (val >= 40) return { hex: '#f39c12', rgb: '243,156,18'  }; // Orange (Transitional)
+    return              { hex: '#d35400', rgb: '211,84,0'    }; // Dark Orange/Red (Turbulent)
+}
+
+// ==========================================
+// RESULTS
+// ==========================================
+function showResults() {
+    document.getElementById('quiz-section').style.display    = 'none';
+    document.getElementById('results-section').style.display = 'block';
+
+    // Tally dimension scores
+    const rawDims = {};
+    Object.keys(DIMENSIONS).forEach(d => rawDims[d] = []);
+    
+    shuffledQuestions.forEach((q, i) => {
+        if (savedAnswers[i] !== undefined) {
+            let score = savedAnswers[i];
+            if (q.r) score = 100 - score; // Reverse score logic
+            rawDims[q.dim].push(score);
+        }
+    });
+
+    // Average each dimension (0-100)
+    const norm = {};
+    Object.keys(rawDims).forEach(d => {
+        const sum = rawDims[d].reduce((a, b) => a + b, 0);
+        norm[d] = Math.round(sum / 5);
+    });
+
+    // Overall Coherence: average of all 8 normalized dimensions
+    const totalNorm  = Object.values(norm).reduce((s, v) => s + v, 0);
+    const ccqPct     = Math.round(totalNorm / Object.keys(DIMENSIONS).length);
+
+    let densityText, densityNote;
+    if (ccqPct >= 85) {
+        densityText = 'Fröhlich Condensate';
+        densityNote = 'Your mind operates as a frictionless superfluid. Your brain waves are highly synchronous, and your Default Mode Network is remarkably quiet. You reside effortlessly in the present moment, prior to bifurcation. You are perfectly aligned with the escape trajectories of the Buddhabrot.';
+    } else if (ccqPct >= 60) {
+        densityText = 'Laminar Flow';
+        densityNote = 'Your mind is achieving periods of macroscopic coherence. Experiences pass through you with very little egoic friction. You are frequently bypassing the Language trap and resting near the zero-compute state, though minor turbulence still occasionally arises.';
+    } else if (ccqPct >= 40) {
+        densityText = 'Transitional Flow';
+        densityNote = 'You are beginning to calm the computational turbulence. You have moments of synchrony, but your egoic structures still frequently bifurcate reality and cause internal friction. You are learning to observe the illusion without immediately identifying with it.';
+    } else {
+        densityText = 'Turbulent Flow';
+        densityNote = 'Your mind is currently operating like a highly heated gas. Your Default Mode Network is highly active, causing your wavefunctions to collapse out of sync. This creates high friction and stickiness, binding your Awareness tightly to the perimeter of the Reality Fractal.';
+    }
+
+    document.getElementById('densityValue').textContent = densityText;
+    document.getElementById('densityScore').textContent = `Overall Coherence: ${ccqPct}%`;
+    document.getElementById('densityNote').textContent  = densityNote;
+
+    // Color the top box
+    const dCol = scoreColor(ccqPct);
+    const dBox = document.querySelector('.density-box');
+    dBox.style.background   = `rgba(${dCol.rgb}, 0.10)`;
+    dBox.style.borderColor  = `rgba(${dCol.rgb}, 0.35)`;
+    document.querySelector('.density-label').style.color = dCol.hex;
+
+    // Generate specific insights
+    const sortedData = Object.entries(norm).sort((a, b) => b[1] - a[1]); // Highest to lowest
+    const ic = document.getElementById('insightContainer');
+    ic.innerHTML = '';
+
+    const getS = (name) => norm[name];
+
+    // Insight Logic
+    if (getS('Metacognition') > 70 && getS('Void Tolerance') < 40) {
+        ic.innerHTML += `<div class="insight-card"><strong>The Observer's Trap:</strong> You have high Metacognition (${getS('Metacognition')}) but low Void Tolerance (${getS('Void Tolerance')}). You can witness your thoughts, but you are afraid of the silence beneath them. You are observing the computation, but refusing to turn it off.</div>`;
+    }
+    if (getS('Bifurcation') < 40 && getS('Viscosity') < 40) {
+        ic.innerHTML += `<div class="insight-card"><strong>The Linguistic Sticky Trap:</strong> Low Coherence in Bifurcation and Viscosity indicates that your mind rapidly labels experiences as "good/bad" and then gets stuck on those labels, generating massive computational friction. Use the Language Undoer app.</div>`;
+    }
+    if (getS('Synchrony') > 70 && getS('Relational Unity') < 40) {
+        ic.innerHTML += `<div class="insight-card"><strong>Isolated Flow:</strong> You achieve flow states and synchrony (${getS('Synchrony')}) while working or acting, but you still view others as fundamentally separate competitors (${getS('Relational Unity')}). Your coherence is currently compartmentalized to tasks, not relationships.</div>`;
+    }
+    if (getS('Default Mode') < 40 && getS('Temporality') < 40) {
+        ic.innerHTML += `<div class="insight-card"><strong>Timeline Anchoring:</strong> Your Default Mode Network is heavily utilizing energy to simulate past regrets and future anxieties. You are burning compute on realities that do not currently exist, dragging you out of the zero-compute present.</div>`;
+    }
+    if (ccqPct >= 75) {
+        ic.innerHTML += `<div class="insight-card" style="border-left-color: var(--accent);"><strong>Symmetrical Coherence:</strong> Your awareness profile is pushing outward smoothly. Continue resting in the Void and maintaining non-dual awareness in daily life to allow the Fröhlich resonance to stabilize entirely.</div>`;
+    }
+
+    window._lastScores = norm;
+
+    // Pass the sorted data to the chart and the bars
+    renderChart(sortedData);
+
+    // Bars
+    const barContainer = document.getElementById('barContainer');
+    barContainer.innerHTML = '';
+    sortedData.forEach(([name, val]) => {
+        const col = scoreColor(val);
+        barContainer.innerHTML += `
+            <div class="arch-bar-row">
+                <div class="arch-label">${name}</div>
+                <div class="arch-track">
+                    <div class="arch-fill" style="width:${val}%; background:${col.hex};"></div>
+                </div>
+                <div class="arch-score" style="color:${col.hex};">${val}</div>
+            </div>`;
+    });
+
+    // Coherence Practices (Bottom 3 dimensions)
+    const pbContainer = document.getElementById('pbContainer');
+    pbContainer.innerHTML = '';
+    const bottom3 = [...sortedData].reverse().slice(0, 3);
+    bottom3.forEach(([name, val]) => {
+        const d = DIMENSIONS[name];
+        const col = scoreColor(val);
+        pbContainer.innerHTML += `
+            <div class="pb-card" style="border-left-color:${col.hex};">
+                <div class="pb-archetype" style="color:${col.hex};">${name} · Score: ${val}</div>
+                <div class="pb-exercise-title">${d.antidote.title}</div>
+                <div class="pb-exercise-desc">${d.antidote.desc}</div>
+                <div class="pb-why" style="border-top:1px solid var(--border); margin-top:12px; padding-top:12px;">${d.antidote.why}</div>
+            </div>`;
+    });
+
+    // Dimension Descriptions
+    const legendGrid = document.getElementById('legendGrid');
+    legendGrid.innerHTML = '';
+    Object.entries(DIMENSIONS).forEach(([name, data]) => {
+        legendGrid.innerHTML += `
+            <div class="legend-item">
+                <div class="legend-item-name">${name}</div>
+                <div class="legend-item-desc">${data.desc}</div>
+            </div>`;
+    });
+}
+
+// ==========================================
+// RADAR CHART
+// ==========================================
+function renderChart(sortedData) {
+    if (window._radarChart) window._radarChart.destroy();
+    const ctx    = document.getElementById('radarChart').getContext('2d');
+    
+    // Since the data is already sorted high to low, the chart will plot highest at 12 o'clock, descending clockwise
+    const labels = sortedData.map(([name]) => name);
+    const data   = sortedData.map(([, val]) => val);
+    
+    // Map individual point colors directly to their score colors
+    const pointColors = sortedData.map(([, val]) => scoreColor(val).hex);
+
+    window._radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Coherence Footprint',
+                data,
+                backgroundColor: 'rgba(211,84,0,0.15)', // Subtle transparent orange fill
+                borderColor: 'rgba(211,84,0,0.6)', // Orange border
+                borderWidth: 2,
+                pointBackgroundColor: pointColors, // Points match bar colors
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0, max: 100,
+                    ticks: { stepSize: 25, showLabelBackdrop: false, color: '#555', font: { size: 10 } },
+                    pointLabels: { font: { size: 12, family: "'Raleway', sans-serif" }, color: '#bbb' },
+                    grid: { color: '#2a2a2a' },
+                    angleLines: { color: '#2a2a2a' }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// ==========================================
+// ACCORDION
+// ==========================================
+function toggleAccordion(bodyId, arrowId) {
+    const body  = document.getElementById(bodyId);
+    const arrow = document.getElementById(arrowId);
+    body.classList.toggle('open');
+    arrow.classList.toggle('open');
+}
+
+// ==========================================
+// SAVE (simple)
+// ==========================================
+function saveResults() {
+    const filename = prompt("Enter a name for your file:", "My_Coherence_Profile");
+    if (!filename) return;
+    window.scrollTo(0, 0);
+    html2canvas(document.getElementById('results-capture'), {
+        backgroundColor: '#161616',
+        scale: 2,
+        useCORS: true
+    }).then(canvas => {
+        const link    = document.createElement('a');
+        link.download = filename + '.png';
+        link.href     = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+
+// ==========================================
+// FULL REPORT
+// ==========================================
+function downloadFull() {
+    const filename = prompt("Enter a name for your file:", "My_Coherence_Profile_Full");
+    if (!filename) return;
+
+    const frLeft  = document.getElementById('fr-left');
+    const frRight = document.getElementById('fr-right');
+    frLeft.innerHTML  = '';
+    frRight.innerHTML = '';
+
+    // Left column
+    const leftTitle = document.createElement('div');
+    leftTitle.className = 'report-col-title';
+    leftTitle.textContent = 'Your Coherence Profile';
+    frLeft.appendChild(leftTitle);
+
+    const captureClone = document.getElementById('results-capture').cloneNode(true);
+    frLeft.appendChild(captureClone);
+
+    // Replace canvas
+    const liveCanvas = document.getElementById('radarChart');
+    const chartImg   = new Image();
+    chartImg.src     = liveCanvas.toDataURL('image/png');
+
+    const canvasInClone = captureClone.querySelector('canvas');
+    if (canvasInClone) {
+        const chartContainer = canvasInClone.closest('.chart-container');
+        if (chartContainer) {
+            chartContainer.style.cssText = 'position:relative;height:420px;overflow:hidden;width:100%;';
+        }
+        chartImg.style.cssText = 'width:100%;height:420px;object-fit:contain;border-radius:8px;display:block;';
+        canvasInClone.parentNode.replaceChild(chartImg, canvasInClone);
+    }
+
+    // Right column
+    const rightTitle = document.createElement('div');
+    rightTitle.className = 'report-col-title';
+    rightTitle.textContent = 'Practices & Descriptions';
+    frRight.appendChild(rightTitle);
+
+    const pbHead = document.createElement('div');
+    pbHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin-bottom:12px;';
+    pbHead.textContent = 'Coherence Practices';
+    frRight.appendChild(pbHead);
+
+    const pbClone = document.getElementById('pbContainer').cloneNode(true);
+    frRight.appendChild(pbClone);
+
+    const legendHead = document.createElement('div');
+    legendHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin:24px 0 12px;';
+    legendHead.textContent = 'Dimension Descriptions';
+    frRight.appendChild(legendHead);
+
+    const legendClone = document.getElementById('legendGrid').cloneNode(true);
+    frRight.appendChild(legendClone);
+
+    const fr = document.getElementById('full-report-capture');
+    fr.style.top      = '-99999px';
+    fr.style.position = 'fixed';
+
+    function doCapture() {
+        html2canvas(fr, {
+            backgroundColor: '#0d0d0d',
+            scale: 2,
+            useCORS: true,
+            width: 1400,
+            windowWidth: 1400
+        }).then(canvas => {
+            const link    = document.createElement('a');
+            link.download = filename + '.png';
+            link.href     = canvas.toDataURL('image/png');
+            link.click();
+            frLeft.innerHTML  = '';
+            frRight.innerHTML = '';
+        });
+    }
+
+    if (chartImg.complete) {
+        setTimeout(doCapture, 80);
+    } else {
+        chartImg.onload = () => setTimeout(doCapture, 80);
+    }
+}
+
+// ==========================================
+// PARTICIPATION
+// ==========================================
+function handleParticipation() {
+    const checked = document.getElementById('participateCheck').checked;
+    const status  = document.getElementById('participationStatus');
+    if (checked) {
+        status.style.color = 'var(--accent)';
+        status.innerText   = 'Thank you. Your anonymized scores have been queued for submission.';
+        sendDataToBackend();
+    } else {
+        status.style.color = 'var(--text-muted)';
+        status.innerText   = 'Your data will not be submitted.';
+    }
+}
+
+function sendDataToBackend() {
+    const payload = {
+        source: 'Cognitive Coherence Quotient',
+        scores: window._lastScores || {},
+        timestamp: new Date().toISOString()
+    };
+
+    fetch('https://script.google.com/macros/s/AKfycbyWU-ETAzzwUwDXnzDL3xWd2o7scVjKO6Su3IqCXvW160YgnfY-ko9xBC0XXC6jbwpq/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Scores submitted successfully. Thank you.';
+    }).catch(err => {
+        console.error('Submission error:', err);
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Submission failed. Please try again later.';
+    });
+}
+</script>
+</body>
+</html>
